@@ -1,0 +1,29 @@
+{
+  "name": "twitter_like_api",
+  "version": "1.0.0",
+  "description": "rest api for twitter like functionality",
+  "main": "node ./src/app.js",
+  "scripts": {
+    "postinstall": "npx prisma generate",
+    "test": "start",
+    "start": "node src/server.js"
+    
+  },
+  "author": "Filippo Bassetti",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.10.0",
+    "dotenv": "^16.5.0",
+    "express.js": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "prisma": "^6.10.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma",
+    "seed": "node src/prisma/seed.js"
+  }
+}
