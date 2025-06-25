@@ -7,7 +7,6 @@
     "postinstall": "npx prisma generate",
     "test": "start",
     "start": "node src/server.js"
-    
   },
   "author": "Filippo Bassetti",
   "license": "ISC",
@@ -17,10 +16,8 @@
     "express.js": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.3",
     "prisma": "^6.10.0",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "tsx": "^4.20.3"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma",

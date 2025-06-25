@@ -1,4 +1,4 @@
-const prisma = require( '../prisma/client');
+const prisma = require('../prisma/client');
 const users = [];
 
 async function fetchUsers() {
@@ -7,17 +7,19 @@ async function fetchUsers() {
 }
 
 async function fetchUserById(userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    }
-    );
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  }
+  );
 
-    if (!user) {
-      throw new Error('User not found with id: ' + userId);
-    }
+  if (!user) {
+    const error = new Error(`User not found with id: ${userId}`);
+    error.status = 404;
+    throw error;
+  }
 
-    console.log('User fetched successfully:', user);
-    return user;
+  console.log('User fetched successfully:', user);
+  return user;
 }
 
 module.exports = {
