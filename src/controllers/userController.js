@@ -1,6 +1,6 @@
 const userService = require('../services/userService');
 
-exports.getUsers = async (req, res, next) => {
+async function getUsers(req, res, next){
   try {
     const users = await userService.fetchUsers();
     res.status(200).json(users);
@@ -11,7 +11,7 @@ exports.getUsers = async (req, res, next) => {
   }
 }
 
-exports.getUserById = async (req, res, next) => {
+async function getUserById(req, res, next){
   const userId = parseInt(req.params.id, 10);
   try {
     const user = await userService.fetchUserById(userId);
@@ -21,12 +21,52 @@ exports.getUserById = async (req, res, next) => {
   }
 };
 
-exports.getUserByUsername = async (req, res, next) => {
+async function getUserByUserName(req, res, next){
   const username = req.params.username;
   try {
-    const user = await userService.fetchUserByUsername(username);
+    const user = await userService.fetchUserByUserName(username);
     res.status(200).json(user);
   } catch (error) {
     next(error);
   }
+}
+
+async function createUser(req, res, next){
+  const newUser = req.body;
+  try {
+    const user = await userService.createUser(req.body);
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function updateUser(req, res, next){
+  const userId = parseInt(req.params.id, 10);
+  const updatedUser = req.body;
+  try {
+    const user = await userService.updateUser(userId, updatedUser);
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function deleteUser(req, res, next){
+  const userId = parseInt(req.params.id, 10);
+  try {
+    const user = await userService.deleteUser(userId);
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {
+  getUsers,
+  getUserById,
+  getUserByUserName,
+  createUser,
+  updateUser,
+  deleteUser
 }
