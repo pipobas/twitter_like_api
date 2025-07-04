@@ -63,6 +63,35 @@ async function fetchUserByUserName(userName) {
   }
 }
 
+async function fetchTweetsByUserId(userId) {
+  try {
+    const tweets = await prisma.tweet.findMany({
+      where: { authorId: userId },
+      select: {
+        id: true,
+        content: true,
+        hashtags: true,
+        createdAt: false,
+        authorId: true,
+        numberOfLikes: true,
+      },
+    }
+    );
+    console.log('Tweets fetched successfully:', tweets);
+    return tweets;
+  }
+  catch (err) {
+    if (err instanceof PrismaClientKnownRequestError) {
+      if (err.code === 'P2025') {
+        const error = new Error(`User not found with id: ${userId}`);
+        error.status = 404;
+        throw error;
+      }
+    }
+    throw err;
+  }
+}
+
 async function createUser(userData) {
   try {
     const user = await prisma.user.create({
@@ -166,6 +195,7 @@ module.exports = {
   fetchUsers,
   fetchUserById,
   fetchUserByUserName,
+  fetchTweetsByUserId,
   createUser,
   updateUser,
   deleteUser
