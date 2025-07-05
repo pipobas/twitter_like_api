@@ -3,7 +3,7 @@ const { PrismaClientKnownRequestError, PrismaClientValidationError } = require('
 
 async function fetchAllTweets() {
 
-    const tweets = await prisma.tweet.findMany()
+    const tweets = await prisma.tweet.findMany({take: 20})
     return tweets;
 }
 
@@ -44,7 +44,7 @@ async function fetchTweetById(tweetId) {
     }
 }
 
-async function fetchTweetByUserId(userId) {
+async function fetchTweetsByUserId(userId) {
     try {
         const tweets = await prisma.tweet.findMany({
             where: { authorId: userId },
@@ -56,6 +56,10 @@ async function fetchTweetByUserId(userId) {
                 authorId: true,
                 numberOfLikes: true,
             },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            take: 20,
         });
         console.log('Tweets fetched successfully:', tweets);
         return tweets;
@@ -63,6 +67,37 @@ async function fetchTweetByUserId(userId) {
         if (err instanceof PrismaClientKnownRequestError) {
             if (err.code === 'P2025') {
                 const error = new Error(`Tweets not found for user with id: ${userId}`);
+                error.status = 404;
+                throw error;
+            }
+        }
+        throw err;
+    }
+}
+
+async function advancedTweetSearch(content, hashtags) {
+    try {
+
+        const combinedQuery = content + (hashtags?.length ? ' ' + hashtags.join(' ') : '');
+
+        const tweets = await prisma.$queryRaw`
+            SELECT
+                *,
+                ts_rank(
+                to_tsvector('english', content || ' ' || array_to_string(hashtags, ' ')),
+                plainto_tsquery('english', ${combinedQuery})
+                ) AS rank
+            FROM "Tweet"
+            WHERE to_tsvector('english', content || ' ' || array_to_string(hashtags, ' '))
+                @@ plainto_tsquery('english', ${combinedQuery})
+            ORDER BY rank DESC, "createdAt" DESC
+            LIMIT 20;`;
+        return tweets;
+    }
+    catch (err) {
+        if (err instanceof PrismaClientKnownRequestError) {
+            if (err.code === 'P2025') {
+                const error = new Error('No tweets found matching search criteria');
                 error.status = 404;
                 throw error;
             }
@@ -109,16 +144,101 @@ async function createTweet(tweetData) {
     }
 }
 
+async function likeTweet(tweetId, userId) {
+    try {
+        const alreadyLiked = await prisma.tweet.findFirst({
+            where: {
+                id: tweetId,
+                likers: {
+                    some: { id: userId },
+                },
+            },
+        });
+
+        if (alreadyLiked) {
+            const error = new Error(`User ${userId} has already liked tweet ${tweetId}`);
+            error.status = 400;
+            throw error;
+        }
+
+        const tweet = await prisma.tweet.update({
+            where: { id: tweetId },
+            data: {
+                numberOfLikes: {
+                    increment: 1,
+                },
+                likers: {
+                    connect: { id: userId },
+                },
+            },
+        });
+
+        console.log(`Tweet with ID ${tweetId} liked by user ${userId}`);
+        return tweet;
+    } catch (err) {
+        if (err instanceof PrismaClientKnownRequestError) {
+            if (err.code === 'P2025') {
+                const error = new Error(`Tweet not found with id: ${tweetId}`);
+                error.status = 404;
+                throw error;
+            }
+        }
+        throw err;
+    }
+}
+
+async function dislikeTweet(tweetId, userId) {
+    try {
+        const alreadyLiked = await prisma.tweet.findFirst({
+            where: {
+                id: tweetId,
+                likers: {
+                    some: { id: userId },
+                },
+            },
+        });
+
+        if (!alreadyLiked) {
+            const error = new Error(`User ${userId} has not liked tweet ${tweetId}`);
+            error.status = 400;
+            throw error;
+        }
+
+        const tweet = await prisma.tweet.update({
+            where: { id: tweetId },
+            data: {
+                numberOfLikes: {
+                    decrement: 1,
+                },
+                likers: {
+                    disconnect: { id: userId },
+                },
+            },
+        });
+
+        console.log(`Tweet with ID ${tweetId} has lost a like by user ${userId}`);
+        return tweet;
+    } catch (err) {
+        if (err instanceof PrismaClientKnownRequestError) {
+            if (err.code === 'P2025') {
+                const error = new Error(`Tweet not found with id: ${tweetId}`);
+                error.status = 404;
+                throw error;
+            }
+        }
+        throw err;
+    }
+}
+
 
 module.exports = {
     fetchAllTweets,
-    fetchLatestTweet, 
-    fetchTweetById,  
-    fetchTweetByUserId, 
-    createTweet
-
-}
-/*
-  liketweet,
-  dislikeTweet,
-  deleteTweet*/
+    fetchLatestTweet,
+    fetchTweetById,
+    fetchTweetsByUserId,
+    advancedTweetSearch,
+    createTweet,
+    likeTweet,
+    dislikeTweet
+    // deleteTweet -> no delete beacuse take your responsibility when you write a tweet
+    }
