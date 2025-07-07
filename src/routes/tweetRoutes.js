@@ -18,10 +18,6 @@ router.get('/user/:userId', (req, res, next) => {
     tweetController.getTweetsByUserId(req, res, next);
 });
 
-router.get('/content', (req, res, next) => {
-    tweetController.getTweetsByContent(req, res, next);
-});
-
 router.post('/', (req, res, next) => {
     tweetController.createTweet(req, res, next);
 });

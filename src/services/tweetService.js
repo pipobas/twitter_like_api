@@ -76,7 +76,6 @@ async function fetchTweetsByUserId(userId) {
 }
 
 async function advancedTweetSearch(content, hashtags) {
-    try {
 
         const combinedQuery = content + (hashtags?.length ? ' ' + hashtags.join(' ') : '');
 
@@ -93,17 +92,6 @@ async function advancedTweetSearch(content, hashtags) {
             ORDER BY rank DESC, "createdAt" DESC
             LIMIT 20;`;
         return tweets;
-    }
-    catch (err) {
-        if (err instanceof PrismaClientKnownRequestError) {
-            if (err.code === 'P2025') {
-                const error = new Error('No tweets found matching search criteria');
-                error.status = 404;
-                throw error;
-            }
-        }
-        throw err;
-    }
 }
 
 async function createTweet(tweetData) {

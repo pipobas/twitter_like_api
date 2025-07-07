@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Tweeter Like API
+  description: Tweeter like api with like capaability. Content full text search and hastags are also implemented
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:4000
+
+paths:
+  /tweets:
+    get:
+      summary: Get all tweets with optional advanced search
+      description: Fetches all tweets. Supports advanced search by content query (`q`) and hashtags if provided, a failed advanced search will just return an empty array
+      parameters:
+        - name: q
+          in: query
+          description: Text to search for in tweet content
+          schema:
+            type: string
+          required: false
+        - name: hashtags
+          in: query
+          description: One or more hashtags to filter tweets by 
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          required: false
+      responses:
+        '200':
+          description: all the tweets or a list of tweets matching 
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+    post:
+      summary: Create a tweet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tweet'
+      responses:
+        '201':
+          description: Tweet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '400':
+          description: Invalid tweet data
+        '404':
+          description: User not found with given authorId
+
+  /tweets/latest:
+    get:
+      summary: Get latest tweet(s) with optional advanced search
+      description: Fetches latest tweets. Supports advanced search by content query (`q`) and hashtags if provided, a failed advanced search will just return an empty array
+      parameters:
+        - name: q
+          in: query
+          description: Text to search for in tweet content
+          schema:
+            type: string
+          required: false
+        - name: hashtags
+          in: query
+          description: One or more hashtags to filter tweets by (can be repeated)
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          required: false
+      responses:
+        '200':
+          description: The latest tweets matching criteria (or the most recent tweet if no query)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+
+  /tweets/{id}:
+    get:
+      summary: Get tweet by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tweet with specified ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '404':
+          description: Tweet not found
+
+  /tweets/user/{userId}:
+    get:
+      summary: Get tweets by user ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tweets from a specific user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+        '404':
+          description: Tweets or user not found
+
+  /tweets/{id}/like:
+    post:
+      summary: Like a tweet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: User ID liking the tweet
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+              required:
+                - userId
+      responses:
+        '201':
+          description: Tweet liked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '400':
+          description: User has already liked this tweet
+        '404':
+          description: Tweet or user not found
+
+  /tweets/{id}/dislike:
+    post:
+      summary: Dislike a tweet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: User ID disliking the tweet
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+              required:
+                - userId
+      responses:
+        '201':
+          description: Tweet disliked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '400':
+          description: User has not liked this tweet yet
+        '404':
+          description: Tweet or user not found
+  /users:
+    get:
+      summary: Get all users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid user data
+
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+    put:
+      summary: Update user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          
+        '404':
+          description: User not found
+    delete:
+      summary: Delete user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+          
+  /users/username/{username}:
+    get:
+      summary: Get user by username
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+  /users/{id}/tweets:
+    get:
+      summary: Get tweets by user ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of user's tweets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+        '404':
+          description: User or tweets not found
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        userName:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        tweets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tweet'
+
+    Tweet:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        authorId:
+          type: integer
+        numberOfLikes:
+          type: integer
+        likers:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
