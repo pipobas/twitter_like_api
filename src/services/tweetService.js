@@ -76,22 +76,21 @@ async function fetchTweetsByUserId(userId) {
 }
 
 async function advancedTweetSearch(content, hashtags) {
+    const combinedQuery = content + (hashtags?.length ? ' ' + hashtags.join(' ') : '');
 
-        const combinedQuery = content + (hashtags?.length ? ' ' + hashtags.join(' ') : '');
-
-        const tweets = await prisma.$queryRaw`
-            SELECT
-                *,
-                ts_rank(
-                to_tsvector('english', content || ' ' || array_to_string(hashtags, ' ')),
-                plainto_tsquery('english', ${combinedQuery})
-                ) AS rank
-            FROM "Tweet"
-            WHERE to_tsvector('english', content || ' ' || array_to_string(hashtags, ' '))
-                @@ plainto_tsquery('english', ${combinedQuery})
-            ORDER BY rank DESC, "createdAt" DESC
-            LIMIT 20;`;
-        return tweets;
+    const tweets = await prisma.$queryRaw`
+        SELECT
+            *,
+            ts_rank(
+            to_tsvector('english', content || ' ' || array_to_string(hashtags, ' ')),
+            plainto_tsquery('english', ${combinedQuery})
+            ) AS rank
+        FROM "Tweet"
+        WHERE to_tsvector('english', content || ' ' || array_to_string(hashtags, ' '))
+            @@ plainto_tsquery('english', ${combinedQuery})
+        ORDER BY rank DESC, "createdAt" DESC
+        LIMIT 20;`;
+    return tweets;
 }
 
 async function createTweet(tweetData) {

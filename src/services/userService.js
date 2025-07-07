@@ -124,11 +124,6 @@ async function createUser(userData) {
         error.status = 400;
         throw error;
       }
-      /*if (err.code === 'P2012') {
-        const error = new Error(`Missing required field ${err.meta?.path}`);
-        error.status = 400;
-        throw error;
-      }*/
     }
     throw err;
   }
